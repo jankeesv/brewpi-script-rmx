@@ -44,9 +44,9 @@ import stat
 import sys
 import time
 import traceback
-import urllib.error
 import urllib.parse
-import urllib.request
+import urllib.error
+from urllib import request
 from decimal import *
 from distutils.version import LooseVersion
 from pprint import pprint
@@ -694,6 +694,7 @@ def startLogs():  # Log startup messages
     global branch
     global commit
     global outputJson
+    global outputInfluxDB
 
     # Output the current script version
     logMessage('{0} ({1}) [{2}]'.format(version, branch, commit))
@@ -1625,30 +1626,47 @@ def loop():  # Main program loop
 
                                 # Log the values to InfluxDB if true, false is short message, none = mute
                                 if outputInfluxDB == True:
+                                    logMessage(
+                                        'New InfluxDB measurement.')
                                     influxResponse = None
                                     try:
                                         # Sample URI http://localhost:8086/write?db=brewpi
-                                        delim = ','
-                                        influxValues = ("BeerTemp=" + json.dumps(newRow['BeerTemp']) + delim +
-                                                   "BeerSet=" + json.dumps(newRow['BeerSet']) + delim +
-                                                   "BeerAnn=" + json.dumps(newRow['BeerAnn']) + delim +
-                                                   "FridgeTemp=" + json.dumps(newRow['FridgeTemp']) + delim +
-                                                   "FridgeSet=" + json.dumps(newRow['FridgeSet']) + delim +
-                                                   "FridgeAnn=" + json.dumps(newRow['FridgeAnn']) + delim +
-                                                   "RoomTemp=" + json.dumps(newRow['RoomTemp']) + delim +
-                                                   "State=" + json.dumps(newRow['State']))
+                                        delim = ","
+                                        influxValues = ""
+                                        
+                                        if json.dumps(newRow['BeerTemp']) is not "null":
+                                            influxValues = influxValues + "BeerTemp=" + json.dumps(newRow['BeerTemp']) + delim
+                                        if json.dumps(newRow['BeerSet']) is not "null":
+                                            influxValues = influxValues + "BeerSet=" + json.dumps(newRow['BeerSet']) + delim
+                                        if json.dumps(newRow['BeerAnn']) is not "null":
+                                            influxValues = influxValues + "BeerAnn=" + json.dumps(newRow['BeerAnn']) + delim
+                                        if json.dumps(newRow['FridgeTemp']) is not "null":
+                                            influxValues = influxValues + "FridgeTemp=" + json.dumps(newRow['FridgeTemp']) + delim
+                                        if json.dumps(newRow['FridgeSet']) is not "null":
+                                            influxValues = influxValues + "FridgeSet=" + json.dumps(newRow['FridgeSet']) + delim
+                                        if json.dumps(newRow['FridgeAnn']) is not "null":
+                                            influxValues = influxValues + "FridgeAnn=" + json.dumps(newRow['FridgeAnn']) + delim
+                                        if json.dumps(newRow['RoomTemp']) is not "null":
+                                            influxValues = influxValues + "RoomTemp=" + json.dumps(newRow['RoomTemp']) + delim
+                                        if json.dumps(newRow['State']) is not "null":
+                                            influxValues = influxValues + "State=" + json.dumps(newRow['State']) + delim
 
-                                        influxData = config['influxSeriesName'] + ",source=" + config['influxSource'] + " " + influxValues
-                                        influxRequest = urllib.request.request(config['influxUri'] + ":" + config['influxPort'] + "/write?db=" + config['influxDatabaseName'], data=influxData)
+                                        influxValues = influxValues[:-1]
+
+                                        influxData = str(config['influxSeriesName'] + ",source=" + config['influxSource'] + " " + influxValues)
+                                        influxData = influxData.encode()
+                                        influxUrl = str(config['influxUri'] + ":" + config['influxPort'] + "/write?db=" + config['influxDatabaseName'])
+                                        influxRequest = request.Request(influxUrl, data=influxData)
                                         influxRequest.add_header('Authorization', config['influxHeaderAuthValue'])
-                                        influxResponse = urllib.request.urlopen(influxRequest)
-                                        influxResponseBody = influxRequest.read()
-                                        influxResponse.close()
+                                        influxResponse = request.urlopen(influxRequest)
                                     except Exception as ex:
                                         logMessage("InfluxDB exception: " + str(ex))
-                                    finally:
-                                        if influxResponse is not None:
-                                            influxResponse.close()
+                                elif outputInfluxDB == False:
+                                    logMessage(
+                                        'Not processing InfluxDB measurement.')
+                                else:
+                                    pass
+
 
                                 
                                 # Add row to JSON file

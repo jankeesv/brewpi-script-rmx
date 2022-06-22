@@ -48,7 +48,6 @@
 # If this fails an exception is logged.
 # Uses basic authorization using the encrypted header value of the request.
 # logInfluxDB=True
-# logInfluxDB=True
 # influxUri=http://localhost
 # influxPort=8086
 # influxDatabaseName=brewpi
