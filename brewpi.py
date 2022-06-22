@@ -122,6 +122,7 @@ checkStartupOnly = False
 logToFiles = False
 logPath = None
 outputJson = None  # Print JSON to logs
+outputInfluxDB = None # Log values to InfluxDB
 localJsonFileName = None
 localCsvFileName = None
 wwwJsonFileName = None
@@ -706,6 +707,12 @@ def startLogs():  # Log startup messages
             outputJson = True
         else:
             outputJson = False
+
+    if checkKey(config, 'logInfluxDB'):
+        if config['logInfluxDB'] == 'True':
+            outputInfluxDB = True
+        else:
+            outputInfluxDB = False            
 
     if config['beerName'] == 'None':
         logMessage("Not currently logging.")
@@ -1616,6 +1623,23 @@ def loop():  # Main program loop
                                 else:                       # Don't log JSON messages
                                     pass
 
+                                # Log the values to InfluxDB if true, false is short message, none = mute
+                                if outputInfluxDB == True:
+                                    influxResponse = None
+                                    try:
+                                        influxData = str(json.dumps(newRow)).encode('utf-8')
+                                        # Sample URI http://localhost:8086/write?db=brewpi
+                                        influxRequest = urllib.request.request(config['influxUri'] + config['influxPort'] + "/write?db=" + config['influxDBName'], data=influxData)
+                                        influxResponse = urllib.request.urlopen(influxRequest)
+                                        influxResponseBody = influxRequest.read()
+                                        influxResponse.close()
+                                    except Exception as ex:
+                                        logMessage("InfluxDB update: " + str(ex))
+                                    finally:
+                                        if influxResponse is not None:
+                                            influxResponse.close()
+
+                                
                                 # Add row to JSON file
                                 # Handle if we are running Tilt or iSpindel
                                 if checkKey(config, 'tiltColor'):

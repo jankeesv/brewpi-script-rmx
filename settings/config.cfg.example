@@ -41,3 +41,12 @@
 # useInetSocket=true
 # socketPort=6332
 # socketHost=127.0.0.1
+
+# Log InfluxDB:
+# This controls the logging to InfluxDB with the settings provided.
+# If this fails an exception is logged.
+# logInfluxDB=True
+# logInfluxDB=True
+# influxUri=http://localhost
+# influxPort=8086
+# influxDBName=brewpi
