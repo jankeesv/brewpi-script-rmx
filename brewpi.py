@@ -1627,14 +1627,25 @@ def loop():  # Main program loop
                                 if outputInfluxDB == True:
                                     influxResponse = None
                                     try:
-                                        influxData = str(json.dumps(newRow)).encode('utf-8')
                                         # Sample URI http://localhost:8086/write?db=brewpi
-                                        influxRequest = urllib.request.request(config['influxUri'] + config['influxPort'] + "/write?db=" + config['influxDBName'], data=influxData)
+                                        delim = ','
+                                        influxValues = ("BeerTemp=" + json.dumps(newRow['BeerTemp']) + delim +
+                                                   "BeerSet=" + json.dumps(newRow['BeerSet']) + delim +
+                                                   "BeerAnn=" + json.dumps(newRow['BeerAnn']) + delim +
+                                                   "FridgeTemp=" + json.dumps(newRow['FridgeTemp']) + delim +
+                                                   "FridgeSet=" + json.dumps(newRow['FridgeSet']) + delim +
+                                                   "FridgeAnn=" + json.dumps(newRow['FridgeAnn']) + delim +
+                                                   "RoomTemp=" + json.dumps(newRow['RoomTemp']) + delim +
+                                                   "State=" + json.dumps(newRow['State']))
+
+                                        influxData = config['influxSeriesName'] + ",source=" + config['influxSource'] + " " + influxValues
+                                        influxRequest = urllib.request.request(config['influxUri'] + ":" + config['influxPort'] + "/write?db=" + config['influxDatabaseName'], data=influxData)
+                                        influxRequest.add_header('Authorization', config['influxHeaderAuthValue'])
                                         influxResponse = urllib.request.urlopen(influxRequest)
                                         influxResponseBody = influxRequest.read()
                                         influxResponse.close()
                                     except Exception as ex:
-                                        logMessage("InfluxDB update: " + str(ex))
+                                        logMessage("InfluxDB exception: " + str(ex))
                                     finally:
                                         if influxResponse is not None:
                                             influxResponse.close()

@@ -44,9 +44,14 @@
 
 # Log InfluxDB:
 # This controls the logging to InfluxDB with the settings provided.
+# Series is a logical grouping of data defined by shared measurement, tag set, and field key.
 # If this fails an exception is logged.
+# Uses basic authorization using the encrypted header value of the request.
 # logInfluxDB=True
 # logInfluxDB=True
 # influxUri=http://localhost
 # influxPort=8086
-# influxDBName=brewpi
+# influxDatabaseName=brewpi
+# influxSeriesName=measurements
+# influxSource=brewpi
+# influxHeaderAuthValue=Basic xxx=
